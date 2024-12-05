@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Json Redirect</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+    <h1>Let's redirect to another page with js and djnago view</h1>
+    <form onsubmit="SubmitForm(event)">
+        {% csrf_token %}
+        <label for="name">Name:</label>
+        <input type="text" name="name" id="name" required><br><br>
+
+
+        <label for="email">Email:</label>
+        <input type="email" name="email" id="email" required><br><br>
+
+        <button type="submit">Submit</button>
+
+    </form>
+</body>
+<script>
+    function SubmitForm(event){
+        event.preventDefault();
+
+        const name = document.getElementById('name').value;
+        const email = document.getElementById('email').value;
+        const csrtToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        fetch('{% url "submit_data" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrtToken
+            },
+            body: JSON.stringify({name: name, email: email})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.next_url) {
+                Swal.fire({
+                    title: 'Success!',
+                    text: data.message,
+                    icon: 'success',
+                    confirmButtonText: 'OK'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = data.next_url;
+                    }
+                });
+            } else {
+                Swal.fire({
+                    title: 'Error',
+                    text: 'data.message',
+                    icon: 'error'
+                });
+            }
+
+        })
+        .catch(error => {
+            Swal.fire({
+                title: 'Error',
+                text: 'There was a problem submitting your data',
+                icon: 'error'
+            });
+            console.error('Error:', error)
+        });
+    }
+</script>
+</html>
